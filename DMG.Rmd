@@ -1,0 +1,103 @@
+---
+title: "DMGrowth"
+author: "Jackie"
+date: "May 19, 2016"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Why we need Dry Matter Growth modle
+Plenty evidence shows the variability of pasture pattern comes from two factors: climatic infulence and seasonal infulence. In order to simulate this situation, we use yearly scale to repsent the climatic infulence, such as drought or EL Nino infulence. Monthly scale is adopted here to repsent the seasonal infulence. In general, it could be as below:
+$$Daily GR = yearly scale ~ N(annual DM, \sigma ^2) +monthly scale ~ N(monthly deivation, \theta ^2)$$
+
+## Data collection
+
+## Model in R
+### Deal with data
+According to Dalley and Geddes, data from Woodlands is adopted here. 
+```{r echo=FALSE, message=FALSE, warning=FALSE }
+library("Hmisc")
+library("truncnorm")
+
+#--------------------------
+mydata<-read.csv("C:/Users/Jackie/Documents/R/MY WORK/DMproduction.csv")
+dimnames(mydata)[[1]]<-c("Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May")
+
+```
+
+```{r results="asis", echo=FALSE}
+knitr::kable(mydata, caption = "Pasture Growth from Woodland")
+
+```
+
+
+The first column shows the number of date in each month, which has been averaged for leap years. The second column is the mean of pasture growth in each month with the standard deviation in the third column.
+
+Dalley and Geddes also provide the annual pasture DM, which we adopt here to find a yearly scale. The yearly scale presents the general pasture pattern which vary annually. The replication here matches with ARENA's replication.
+
+```{r}
+anmean<-11
+ansd<-0.38
+rep1<-100
+
+```
+```{r echo=FALSE}
+antotal<-array(0, dim = rep1)
+
+DailyRate<-matrix(0, nrow=rep1, ncol= length(mydata$Mean))
+results<-matrix(0, nrow = rep1, ncol = length(mydata$Mean))
+colnames(DailyRate)<-c("Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May")
+
+monthlytotal<-matrix(0, nrow = rep1, ncol = length(mydata$Mean))
+colnames(monthlytotal)<-c("Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May")
+
+```
+
+After having data,using truncate normal distribution to generate randomness, because negative production doesn't make any sense.
+```{r}
+for (i in 1:rep1) {
+YS<-rtruncnorm(1, a=0, mean = anmean, sd = ansd)
+# get the yearly scale
+Monthmean<-mydata$Mean-YS
+#find out the month scale
+ results[i,]<-rtruncnorm(1, a = -YS, mean = Monthmean, sd=mydata$SD)
+ # Yearly scale + Monthly scale  > 0
+  DailyRate[i,]<-results[i,] + YS
+  # Daily growth rate = Yearly scale + Monthly scale
+  monthlytotal[i,]<-DailyRate[i,]*mydata$Nodate
+  
+  antotal[i]<-sum(monthlytotal[i,])
+}
+
+
+```
+```{r echo=FALSE}
+mm<-colMeans(monthlytotal)
+boxplot(monthlytotal)
+lines(mm, col="red")
+
+write.csv(DailyRate, file = "C:/Users/Jackie/Documents/R/MY WORK/DMG.CSV")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+## simulated value in Arena
+
+
+
+
+
+
