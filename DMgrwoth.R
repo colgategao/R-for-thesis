@@ -45,6 +45,6 @@ Monthmean<-mydata$Mean-YS
 mm<-colMeans(monthlytotal)
 boxplot(monthlytotal)
 lines(mm, col="red")
-Daily<-t(DailyRate)
+Daily<-as.vector(t(DailyRate))
 
 write.csv(Daily, file = "DMG.CSV", row.names = F, col.names = F)
